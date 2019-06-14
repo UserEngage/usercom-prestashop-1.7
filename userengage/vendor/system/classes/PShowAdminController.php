@@ -42,6 +42,22 @@ class PShowAdminController extends ModuleAdminController
         );
     }
 
+    /**
+     * @param string $id
+     * @param array $parameters
+     * @param string|null $domain
+     * @param string|null $locale
+     * @return mixed|string
+     */
+    public function trans($id, array $parameters = array(), $domain = null, $locale = null)
+    {
+        if (!method_exists('Controller', 'trans')) {
+            return $this->l($id);
+        }
+
+        return parent::trans($id, $parameters, $domain, $locale);
+    }
+
     public function __construct()
     {
         @ini_set('display_errors', 'on');
@@ -59,7 +75,7 @@ class PShowAdminController extends ModuleAdminController
         }
 
         $this->addTip(
-            'info', 'tips_information', $this->l('The module provides instructions on how to use the module.'
+            'info', 'tips_information', $this->trans('The module provides instructions on how to use the module.'
             . 'You can close each tip. At any time you can restore all the '
             . 'instructions by going to the module settings and activating '
             . 'the `Show hints` option.')
@@ -153,7 +169,7 @@ class PShowAdminController extends ModuleAdminController
         }
 
         if (!Module::isEnabled(getModuleName(__FILE__))) {
-            $this->alerts[] = array('danger', $this->l('This module is disabled and may work incorrect!'));
+            $this->alerts[] = array('danger', $this->trans('This module is disabled and may work incorrect!'));
         }
 
         if (file_exists(dirname(__FILE__) . "/PShowModuleFix.php") &&
@@ -162,19 +178,34 @@ class PShowAdminController extends ModuleAdminController
         }
 
         if (!$this->template_isset) {
-            $this->setTemplate(str_repeat('../', 4) . 'modules/' . $this->modulename . '/' . $this->newSystemLoc . "system/view/admin_controller.tpl");
+            $this->setTemplate(
+                str_repeat('../', 4) . 'modules/' . $this->modulename . '/'
+                . $this->newSystemLoc . "system/view/admin_controller.tpl"
+            );
         }
 
         if (version_compare(_PS_VERSION_, '1.6', '<')) {
             // PS 1.5 is not compatibile with bootstrap
-            $this->context->controller->addCSS(__PS_BASE_URI__ . 'modules/' . $this->modulename . '/' . $this->newSystemLoc . 'system/view/css/backward-compatibility.css');
+            $this->context->controller->addCSS(
+                __PS_BASE_URI__ . 'modules/' . $this->modulename . '/'
+                . $this->newSystemLoc . 'system/view/css/backward-compatibility.css'
+            );
         }
 
-        $this->context->controller->addJS(__PS_BASE_URI__ . 'modules/' . $this->modulename . '/' . $this->newSystemLoc . 'system/view/js/select_tab.js');
+        $this->context->controller->addJS(
+            __PS_BASE_URI__ . 'modules/' . $this->modulename
+            . '/' . $this->newSystemLoc . 'system/view/js/select_tab.js'
+        );
 
-        $this->context->controller->addJS(__PS_BASE_URI__ . 'modules/' . $this->modulename . '/' . $this->newSystemLoc . 'system/view/js/tips.js');
+        $this->context->controller->addJS(
+            __PS_BASE_URI__ . 'modules/' . $this->modulename . '/'
+            . $this->newSystemLoc . 'system/view/js/tips.js'
+        );
 
-        $this->context->smarty->assign('moduleurl', __PS_BASE_URI__ . 'modules/' . $this->modulename . '/');
+        $this->context->smarty->assign(
+            'moduleurl',
+            __PS_BASE_URI__ . 'modules/' . $this->modulename . '/'
+        );
 
         $this->context->smarty->assign('TOKEN', Tools::getValue('token'));
 
@@ -201,5 +232,116 @@ class PShowAdminController extends ModuleAdminController
         $classname_low = Tools::strtolower(get_class($this));
         $controllername = str_replace(array("controller", $modulename_low), "", $classname_low);
         $this->context->smarty->assign('controllername', $controllername);
+    }
+
+    /**
+     * Find all classes, methods and properties in the directory
+     *
+     * @param array $overrides
+     * @param $path
+     * @throws ReflectionException
+     */
+    protected function findAllOverrides(array &$overrides, $path)
+    {
+        $found = glob($path . '/*');
+        foreach ($found as $_path) {
+            if (is_dir($_path)) {
+                $this->findAllOverrides($overrides, $_path);
+                continue;
+            }
+
+            $contents = file_get_contents($_path);
+            $classname = pathinfo($_path, PATHINFO_FILENAME);
+
+            if ($classname == 'index' || stripos($contents, $classname) === false ||
+                stripos($contents, 'class') === false) {
+                continue;
+            }
+
+            $uniq = uniqid();
+
+            $classTemp = preg_replace(
+                array('#^\s*<\?(?:php)?#', '#class\s+' . $classname . '\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?#i'),
+                array(' ', 'class ' . $classname . 'OverridePShow' . $uniq),
+                $contents
+            );
+
+            eval($classTemp);
+            $override_class = new \ReflectionClass($classname . 'OverridePShow' . $uniq);
+
+            $overrides[$classname] = array(
+                'methods' => array(),
+                'properties' => array(),
+            );
+
+            foreach ($override_class->getMethods() as $method) {
+                $overrides[$classname]['methods'][] = $method->getName();
+            }
+            foreach ($override_class->getProperties() as $property) {
+                $overrides[$classname]['properties'][] = $property->getName();
+            }
+        }
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function checkOverridesAction()
+    {
+        echo '<strong>Missing overrides:</strong> ';
+
+        $moduleOverrides = array();
+        $this->findAllOverrides(
+            $moduleOverrides,
+            _PS_MODULE_DIR_ . getModuleName(__FILE__) . '/override/classes'
+        );
+        $this->findAllOverrides(
+            $moduleOverrides,
+            _PS_MODULE_DIR_ . getModuleName(__FILE__) . '/override/controllers'
+        );
+
+        $shopOverrides = array();
+        $this->findAllOverrides($shopOverrides, _PS_ROOT_DIR_ . '/override/classes');
+        $this->findAllOverrides($shopOverrides, _PS_ROOT_DIR_ . '/override/controllers');
+
+        $missingOverrides = array();
+        foreach ($moduleOverrides as $className => $classContents) {
+            if (!isset($shopOverrides[$className])) {
+                $missingOverrides[$className] = $classContents;
+                continue;
+            }
+
+            $missingOverrides[$className] = array(
+                'properties' => array(),
+                'methods' => array(),
+            );
+
+            foreach ($classContents['properties'] as $propertyName) {
+                if (!in_array($propertyName, $shopOverrides[$className]['properties'])) {
+                    $missingOverrides[$className]['properties'][] = $propertyName;
+                }
+            }
+            foreach ($classContents['methods'] as $methodName) {
+                if (!in_array($methodName, $shopOverrides[$className]['methods'])) {
+                    $missingOverrides[$className]['methods'][] = $methodName;
+                }
+            }
+
+            if (!count($missingOverrides[$className]['properties'])) {
+                unset($missingOverrides[$className]['properties']);
+            }
+            if (!count($missingOverrides[$className]['methods'])) {
+                unset($missingOverrides[$className]['methods']);
+            }
+            if (!count($missingOverrides[$className]['properties']) &&
+                !count($missingOverrides[$className]['methods'])) {
+                unset($missingOverrides[$className]);
+            }
+        }
+
+        echo '<pre>';
+        print_r($missingOverrides);
+        echo '</pre>';
+        die();
     }
 }

@@ -185,7 +185,8 @@ class MigrationTool
     public function getAvailableMigrations()
     {
         $path = _PS_MODULE_DIR_ . $this->moduleName . '/migrations/';
-        $versions = glob($path . '*.php', GLOB_BRACE);
+
+        $versions = glob($path . '*.php');
 
         $result = array(
             'Version0' => '\\PShow\\Core\\Database\\Migrations\\Version0',

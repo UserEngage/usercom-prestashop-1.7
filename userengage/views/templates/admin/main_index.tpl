@@ -17,8 +17,8 @@
             <p class="clearfix">&nbsp;</p>
             <p class="alert alert-info col-lg-offset-3 col-lg-7">
                 {l s='To get API key go to:' mod='userengage'} 
-                <a href="https://app.userengage.com/api/integrations/">
-                    {l s='UserEngage integrations' mod='userengage'}
+                <a href="{l s='https://user.com/en/integrations/prestashop/' mod='userengage'}">
+                    {l s='User.com integrations' mod='userengage'}
                 </a>
             </p>
         </div>
@@ -27,15 +27,18 @@
 
         <div class="form-group clearfix">
             <label class="control-label col-lg-3" for='server'>
-                {l s='Enter custom server domain' mod='userengage'}:
+                {l s='Enter your app domain' mod='userengage'}:
             </label>
             <div class="col-lg-7">
-                <input type='text' name='server' id='server' placeholder="app.userengage.com"
+                <input type='text' name='server' id='server'
                        autocomplete="off" class="form-control" value="{$server}"> 
             </div>
             <p class="clearfix">&nbsp;</p>
             <p class="alert alert-info col-lg-offset-3 col-lg-7">
-                {l s='Default: app.userengage.com' mod='userengage'} 
+                {l s='To get your app domain go to :' mod='userengage'}
+                <a href="{l s='https://user.com/en/integrations/prestashop/' mod='userengage'}">
+                    {l s='User.com integrations' mod='userengage'}
+                </a>
             </p>
         </div>
 

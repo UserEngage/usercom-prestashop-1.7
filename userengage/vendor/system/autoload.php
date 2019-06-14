@@ -10,6 +10,7 @@
  * @copyright   2018 PrestaShow.pl
  * @license     https://prestashow.pl/license
  */
+
 if (!function_exists('getModuleName')) {
 
     function IsModulesInPath($dirpath)
@@ -90,6 +91,7 @@ if (!function_exists('getModuleName')) {
 
 $composer_autoload = dirname(dirname(__FILE__)) . '/autoload.php';
 if (file_exists($composer_autoload)) {
+    /** @var string $composer_autoload */
     require_once $composer_autoload;
 }
 
@@ -119,7 +121,10 @@ if (file_exists($old_module_classes_index_path)) {
  * Generate index of the module classes
  */
 $module_classes_index_path = getModulePath(__FILE__) . 'module_class_index.php';
-if (true || !file_exists($module_classes_index_path)) {
+if (file_exists($module_classes_index_path)) {
+    $module_classes = require $module_classes_index_path;
+}
+if (!file_exists($module_classes_index_path) || !is_array($module_classes) || !count($module_classes)) {
 
     $module_classes = array();
 
@@ -131,13 +136,18 @@ if (true || !file_exists($module_classes_index_path)) {
                 continue;
             }
 
-            if (pathinfo($path, PATHINFO_EXTENSION) != 'php') {
+            if (pathinfo($path, PATHINFO_EXTENSION) != 'php' ||
+                pathinfo($path, PATHINFO_FILENAME) == 'index') {
                 continue;
             }
 
-            $path = "modules/" . str_replace(array('//', $presta_path), array("/", ""), $path);
-            $_classname = substr($path, (stripos($path, '/' . $dir_name . '/') + strlen('/' . $dir_name . '/')));
-            $classname = str_replace(array('//', '/', '.php'), array('/', '\\', null), $_classname);
+            if (stripos($path, '/controllers/') !== false) {
+                $classname = pathinfo($path, PATHINFO_FILENAME);
+            } else {
+                $path = "modules/" . str_replace(array('//', $presta_path), array("/", ""), $path);
+                $_classname = substr($path, (stripos($path, '/' . $dir_name . '/') + strlen('/' . $dir_name . '/')));
+                $classname = str_replace(array('//', '/', '.php'), array('/', '\\', null), $_classname);
+            }
 
             if (version_compare(_PS_VERSION_, '1.6', '>=')) {
                 $module_classes[$classname] = array(
@@ -152,59 +162,10 @@ if (true || !file_exists($module_classes_index_path)) {
     };
 
     $getClassesFromDir('classes', getModulePath(__FILE__) . "vendor/system/classes", $getClassesFromDir);
-
-//    $glob_classes = glob(dirname(getModulePath(__FILE__)) . "/*/vendor/system/classes/*.php");
-//    usort($glob_classes, function ($a, $b) {
-//        return filemtime($b) - filemtime($a);
-//    });
-//    $added = array();
-//
-//    foreach ($glob_classes as $file) {
-//        $path = "modules/" . str_replace($presta_path, "", $file);
-//        $classname = pathinfo($path, PATHINFO_FILENAME);
-//
-//        if ($classname == 'AdminController') {
-//            continue;
-//        }
-//
-//        if (in_array($classname, $added)) {
-//            continue;
-//        }
-//
-//        array_push($added, $classname);
-//
-//        if (version_compare(_PS_VERSION_, '1.6', '>=')) {
-//            $module_classes[$classname] = array(
-//                "path" => $path,
-//                "type" => "class",
-//                "override" => false
-//            );
-//        } else {
-//            $module_classes[$classname] = $path;
-//        }
-//    }
-
-    $glob_classes = glob(getModulePath(__FILE__) . "controllers/*.php");
-
-    foreach ($glob_classes as $file) {
-        $path = "modules/" . str_replace($presta_path, "", $file);
-        $classname = pathinfo($path, PATHINFO_FILENAME);
-
-        if (version_compare(_PS_VERSION_, '1.6', '>=')) {
-            $module_classes[$classname] = array(
-                "path" => $path,
-                "type" => "class",
-                "override" => false
-            );
-        } else {
-            $module_classes[$classname] = $path;
-        }
-    }
-
     $getClassesFromDir('classes', getModulePath(__FILE__) . "classes", $getClassesFromDir);
+    $getClassesFromDir('classes', getModulePath(__FILE__) . "controllers", $getClassesFromDir);
 
     $moduleMainClassPath = "modules/" . getModuleName(__FILE__) . "/" . getModuleName(__FILE__) . '.php';
-
     if (version_compare(_PS_VERSION_, '1.6', '>=')) {
         $module_classes[$moduleMainClassName] = array(
             "path" => $moduleMainClassPath,
@@ -262,7 +223,7 @@ if (!function_exists('getDiskFreeSpace')) {
             return;
         }
 
-        $sizes = 0;
+        $sizes = array();
         @exec("df -g / 2> /dev/null | awk 'FNR == 2 {print $4}'", $sizes);
         if (!$sizes || !count($sizes)) {
             echo 'Check unavailable';
@@ -272,7 +233,7 @@ if (!function_exists('getDiskFreeSpace')) {
 
         echo $size . '/';
 
-        $sizes = 0;
+        $sizes = array();
         @exec("df -g / 2> /dev/null | awk 'FNR == 2 {print $2}'", $sizes);
         if (!count($sizes)) {
             echo 'Check unavailable';

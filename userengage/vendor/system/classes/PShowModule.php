@@ -11,7 +11,7 @@
  * @copyright   2018 PrestaShow.pl
  * @license     https://prestashow.pl/license
  */
-class PShowModule extends Module
+abstract class PShowModule extends Module
 {
 
     /**
@@ -30,6 +30,9 @@ class PShowModule extends Module
     public $controllers = array();
 
     /**
+     * @deprecated For database structure changes use migrations
+     *  https://git.layersshow.com/prestashow/module-docs/src/master/migrations
+     *
      *  Append here all new versions which has got update functions
      *
      *  example:
@@ -65,11 +68,27 @@ class PShowModule extends Module
 
         // run migrations if needed
         if (class_exists('\\PShow\\Core\\Database\\Migrations\\MigrationTool') &&
-            Configuration::get($this->name . '_DB_MIG_VER') != $this->version) {
+            Configuration::get(strtoupper($this->name) . '_DB_MIG_VER') != $this->version) {
             $migrateTool = \PShow\Core\Database\Migrations\MigrationTool::getInstance($this->name);
             $migrateTool->migrateUp(true);
             Configuration::updateValue(strtoupper($this->name) . '_DB_MIG_VER', $this->version);
         }
+    }
+
+    /**
+     * @param string $id
+     * @param array $parameters
+     * @param string|null $domain
+     * @param string|null $locale
+     * @return mixed|string
+     */
+    public function trans($id, array $parameters = array(), $domain = null, $locale = null)
+    {
+        if (!method_exists('Module', 'trans')) {
+            return $this->l($id);
+        }
+
+        return parent::trans($id, $parameters, $domain, $locale);
     }
 
     public function install()
@@ -88,11 +107,18 @@ class PShowModule extends Module
             return false;
         }
 
+        if (!in_array('displayHeader', $this->hooks)) {
+            $this->hooks[] = 'displayHeader';
+        }
+        if (!in_array('displayBackOfficeTop', $this->hooks)) {
+            $this->hooks[] = 'displayBackOfficeTop';
+        }
         foreach ($this->hooks as $hook_name) {
             $this->registerHook($hook_name);
         }
 
-        $key = (version_compare(_PS_VERSION_, '1.6') >= 0) ? $reflection->getShortName() . '_hooks' : substr($reflection->getShortName() . '_hooks', 0, 31);
+        $key = (version_compare(_PS_VERSION_, '1.6') >= 0)
+            ? $reflection->getShortName() . '_hooks' : substr($reflection->getShortName() . '_hooks', 0, 31);
         Configuration::updateValue($key, $this->version);
 
         $this->createAdminTabs();
@@ -103,10 +129,7 @@ class PShowModule extends Module
                 `presta_id_hook` INT NOT NULL ,
                 PRIMARY KEY (`id_hook`)
             ) ENGINE = " . _MYSQL_ENGINE_ . "; ";
-
         Db::getInstance()->query($q);
-
-        $this->registerHook('displayBackOfficeTop');
 
         return true;
     }
@@ -178,7 +201,7 @@ class PShowModule extends Module
                 $tabsub->class_name = 'PrestashowModules';
                 $tabsub->module = $this->name;
                 foreach (Language::getLanguages() as $lang) {
-                    $tabsub->name[$lang['id_lang']] = $this->l('PrestaShow Modules');
+                    $tabsub->name[$lang['id_lang']] = $this->trans('PrestaShow Modules');
                 }
                 $tabsub->id_parent = 0;
                 $tabsub->save();
@@ -223,15 +246,27 @@ class PShowModule extends Module
         return false;
     }
 
+    public function hookDisplayHeader()
+    {
+        Media::addJsDefL('pshow_loaded_module_' . $this->name, $this->displayName);
+        Context::getContext()->controller->addJS($this->_path . 'vendor/system/view/js/displayHeader.js', false);
+    }
+
     /**
      * Check for modules updates
      */
     public function hookDisplayBackOfficeTop()
     {
-        // reinstall hooks after upgrade
+        $controller = Tools::getValue('controller');
+        if ($controller && in_array($controller, array('AdminLogin'))) {
+            return;
+        }
+
         $reflection = new ReflectionClass($this);
         if (Module::isInstalled($this->name)) {
-            Configuration::loadConfiguration();
+//            Configuration::loadConfiguration();
+
+            // install missing hooks
             $key = (version_compare(_PS_VERSION_, '1.6') >= 0) ?
                 $reflection->getShortName() . '_hooks' : substr($reflection->getShortName() . '_hooks', 0, 31);
             $hooks_install_version = Configuration::get($key);
@@ -242,13 +277,18 @@ class PShowModule extends Module
                     }
                 }
                 Configuration::updateValue($key, $this->version);
-                $this->adminDisplayInformation($this->l('Hooks updated for this module :)'));
+                $this->adminDisplayInformation($this->trans($this->displayName . ': hooks updated'));
             }
-        }
 
-        $controller = Tools::getValue('controller');
-        if ($controller && in_array($controller, array('AdminLogin'))) {
-            return;
+            // install missing controllers
+            $key = (version_compare(_PS_VERSION_, '1.6') >= 0) ?
+                $reflection->getShortName() . '_ctrls' : substr($reflection->getShortName() . '_ctrls', 0, 31);
+            $ctrls_install_version = Configuration::get($key);
+            if (!$ctrls_install_version || version_compare($ctrls_install_version, $this->version) < 0) {
+                $this->_installControllers();
+                Configuration::updateValue($key, $this->version);
+                $this->adminDisplayInformation($this->trans($this->displayName . ': controllers updated'));
+            }
         }
 
         $moduleName = PShowUpdateNew::getInstance($this->filepath)->getModuleDisplayName();
@@ -349,17 +389,13 @@ class PShowModule extends Module
                         data: 'token=<?php echo Tools::getAdminTokenLite($moduleName . 'Update') ?>&controller=<?php echo $moduleName ?>Update&getNewestVersion=1'
                     }).done(function (result) {
 
-                        console.log("<?php echo $moduleName ?>");
-                        console.log("<?php echo $moduleVersion ?>");
-                        console.log(result);
-
                         var isVersion = /^([0-9]+)\.([0-9]+)\.([0-9]+)$/;
 
                         if (isVersion.test(result) && version_compare(result, "<?php echo $moduleVersion ?>") === 1) {
 
                             $('.<?php echo $moduleName ?>-update-available').show('slow');
 
-                            console.log("<?php echo $moduleName ?> - New version available! " + result);
+                            console.info("<?php echo $moduleName ?> - New version available! " + result);
 
                             $("head").append(' \
                                 <style> \
@@ -386,7 +422,6 @@ class PShowModule extends Module
                             }, 3000);
 
                         }
-
 
                     });
 
@@ -416,7 +451,6 @@ class PShowModule extends Module
         $match_url = rawurldecode(Tools::getCurrentUrlProtocolPrefix() . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
         if (!preg_match('/^' . Tools::pRegexp(rawurldecode($canonical_url), '/') . '([&?].*)?$/', $match_url)) {
             $params = array();
-            $str_params = '';
             $url_details = parse_url($canonical_url);
 
             if (!empty($url_details['query'])) {

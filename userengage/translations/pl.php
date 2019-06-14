@@ -1,10 +1,10 @@
 <?php
 
-// Generation date: 		2018-12-06 12:33:02
-// Generation time: 		0.04571s
-// Translating time: 		3.55301s
+// Generation date: 		2019-06-14 10:52:56
+// Generation time: 		0.00332s
+// Translating time: 		0.87783s
 // Scanned files count: 	3
-// Translations count: 		66
+// Translations count: 		67
 
 /**
 * File from http://PrestaShow.pl
@@ -130,16 +130,7 @@ $_MODULE['<{userengage}prestashop>main_index_1a11db3d2781e8ee1401eab17b296b6a'] 
 $_MODULE['<{userengage}prestashop>main_index_e82d05db7ce8004acff1bd629698530d'] = 'Wpisz klucz API';
 
 //en value: To get API key go to:
-$_MODULE['<{userengage}prestashop>main_index_20530de1e7e293c48a3ddb1b2f46f093'] = 'Uzyskaj klucz przez:';
-
-//en value: UserEngage integrations
-$_MODULE['<{userengage}prestashop>main_index_a49e82d993057770c1a156cbcbd1d1e8'] = 'Integracje UserEngage';
-
-//en value: Enter custom server domain
-$_MODULE['<{userengage}prestashop>main_index_b2bf74e90c7d0f15cef4fd8a65c18f8b'] = 'Wprowadź domenę serwera';
-
-//en value: Default: app.userengage.com
-$_MODULE['<{userengage}prestashop>main_index_763342924591965f22a1a9238a734f01'] = 'Domyślnie: app.userengage.com';
+$_MODULE['<{userengage}prestashop>main_index_20530de1e7e293c48a3ddb1b2f46f093'] = 'Uzyskaj klucz przez';
 
 //en value: If enabled, all sent events will be visible in the internet browser console.
 $_MODULE['<{userengage}prestashop>main_index_d59f27825729801aa35cc04aaa8e71c0'] = 'Gdy włączone, wszystkie wysyłane zdarzenia będą widoczne w konsoli przeglądarki internetowej.';
@@ -149,9 +140,6 @@ $_MODULE['<{userengage}prestashop>main_index_c9cc8cce247e49bae79f15173ce97354'] 
 
 //en value: Configuration
 $_MODULE['<{userengage}prestashop>side_menu_254f642527b45bc260048e30704edb39'] = 'Konfiguracja';
-
-//en value: UserEngage Management
-$_MODULE['<{userengage}prestashop>userengagemaincontroller_2eec1cc77a0b296599ad16323be9816c'] = 'UserEngage Zarządzanie';
 
 //en value: Module Settings
 $_MODULE['<{userengage}prestashop>userengagemaincontroller_b95d3d403307efa40962df363734e941'] = 'Ustawienia modułu';
@@ -167,5 +155,20 @@ $_MODULE['<{userengage}prestashop>main_index_93cba07454f06a4a960172bbd6e2a435'] 
 
 //en value: No
 $_MODULE['<{userengage}prestashop>main_index_bafd7322c6e97d25b6299b5d6fe8920b'] = 'Nie';
+
+//en value: User.com integrations
+$_MODULE['<{userengage}prestashop>main_index_0c77f1a09e28269e299930d1260a24d6'] = 'Integracje User.com';
+
+//en value: Enter your app domain
+$_MODULE['<{userengage}prestashop>main_index_f5e78c11b265b9263b561ee7a24be00f'] = 'Podaj domenę swojej aplikacji';
+
+//en value: To get your app domain go to :
+$_MODULE['<{userengage}prestashop>main_index_dcdcfb146675c04c77b981f66e5a7df6'] = 'Informacje o swojej domenie znajdziesz na';
+
+//en value: User.com Management
+$_MODULE['<{userengage}prestashop>userengagemaincontroller_f9f48429d75f82bf6913453643c509b6'] = 'Zarządzanie User.com';
+
+//en value: https://user.com/en/integrations/prestashop/
+$_MODULE['<{userengage}prestashop>main_index_07e4923999ced67b995d66bf5bd8f0a7'] = 'https://user.com/pl/integrations/prestashop/';
 
 return $_MODULE;

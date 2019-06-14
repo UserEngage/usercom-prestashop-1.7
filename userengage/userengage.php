@@ -79,11 +79,18 @@ class UserEngage extends PShowModule
     {
         parent::__construct();
 
-        $this->displayName = $this->l('UserEngage');
+        $this->displayName = $this->l('User.com');
         $this->description = $this->l(
             'User.com is a single platform providing you with easy-to-use, '
             . 'yet very robust tools for marketing, sales and support departments.'
         );
+
+        // update tab name
+        $tab = Tab::getInstanceFromClassName('UserEngageMain', Context::getContext()->language->id);
+        if (stripos($tab->name, 'userengage') !== false) {
+            $tab->name = $this->displayName;
+            $tab->save();
+        }
     }
 
     public function install()
@@ -100,6 +107,8 @@ class UserEngage extends PShowModule
         } catch (PrestaShopDatabaseException $e) {
 
         }
+
+        return true;
     }
 
     /**

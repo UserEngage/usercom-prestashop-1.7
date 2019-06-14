@@ -24,7 +24,7 @@ UserEngage = {debug: false, data: []};
  */
 UserEngage.log = function (txt) {
     if (UserEngage.debug) {
-        console.log("UserEngage: " + txt);
+        console.log("User.com: " + txt);
     }
 };
 
@@ -35,7 +35,7 @@ UserEngage.log = function (txt) {
  */
 UserEngage.error = function (txt) {
     if (UserEngage.debug) {
-        console.error("UserEngage Error: " + txt);
+        console.error("User.com Error: " + txt);
     }
 };
 
@@ -46,7 +46,7 @@ UserEngage.error = function (txt) {
  */
 UserEngage.logObj = function (obj) {
     if (UserEngage.debug) {
-        console.log("UserEngage:");
+        console.log("User.com:");
         console.log(obj);
     }
 };
@@ -61,7 +61,7 @@ UserEngage.pushProductEvent = function (data) {
     UserEngage.logObj(data);
 
     if (typeof userengage !== "function") {
-        UserEngage.error("base script from userengage.com not loaded");
+        UserEngage.error("base script from user.com not loaded");
         return;
     }
 
@@ -78,7 +78,7 @@ UserEngage.pushEvent = function (event, data) {
     UserEngage.logObj(data);
 
     if (typeof userengage !== "function") {
-        UserEngage.error("base script from userengage.com not loaded");
+        UserEngage.error("base script from user.com not loaded");
         return;
     }
 
@@ -330,7 +330,7 @@ UserEngage.event.product = {
 
                 // append product name
                 if (productContainer.find('[itemprop="name"]').length) {
-                    eventDetails.name = productContainer.find('[itemprop="name"]').text().trim();
+                    eventDetails.name = productContainer.find('[itemprop="name"]').eq(0).text().trim();
                 }
 
                 // append product price

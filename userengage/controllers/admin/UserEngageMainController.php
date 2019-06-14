@@ -23,7 +23,7 @@ class UserEngageMainController extends PShowAdminController
     {
         parent::__construct();
 
-        $this->controller_displayName = $this->l('UserEngage Management');
+        $this->controller_displayName = $this->l('User.com Management');
     }
 
     public function indexAction()
