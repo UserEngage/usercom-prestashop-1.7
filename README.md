@@ -1,1 +1,1 @@
-Official integration for PrestaShop and User.com 
+Official integration for PrestaShop and User.com
